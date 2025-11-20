@@ -1,0 +1,494 @@
+﻿# Requires PowerShell 5.1+
+# Load necessary WPF and Forms assemblies
+Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase,System.Xaml,System.Windows.Forms
+
+# ---------------------------
+# XAML - Modern UI Definition
+# ---------------------------
+[xml]$xaml = @"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		Title="System Diagnostic Wizard" Width="1000" Height="700" 
+        WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize"
+		Background="#0f172a"> <!-- Deep Modern Blue/Black -->
+
+    <Window.Resources>
+        <!-- COLORS -->
+        <SolidColorBrush x:Key="BgDark" Color="#0f172a"/>
+        <SolidColorBrush x:Key="CardBg" Color="#1e293b"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#3b82f6"/> <!-- Bright Blue -->
+        <SolidColorBrush x:Key="SuccessColor" Color="#4ade80"/> <!-- Green -->
+        <SolidColorBrush x:Key="FailColor" Color="#f87171"/>    <!-- Red -->
+        <SolidColorBrush x:Key="TextPrimary" Color="#f1f5f9"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#94a3b8"/>
+
+        <!-- GLOBAL TEXT STYLE -->
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        </Style>
+
+        <!-- MODERN CARD STYLE -->
+        <Style x:Key="GlassCard" TargetType="Border">
+            <Setter Property="Background" Value="#1e293b"/>
+            <Setter Property="CornerRadius" Value="15"/>
+            <Setter Property="Margin" Value="6"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="Black" BlurRadius="20" ShadowDepth="5" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- MODERN BUTTON STYLE -->
+        <Style TargetType="Button" x:Key="ModernBtn">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="8" Background="#334155" BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#475569"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1e293b"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- HERO BUTTON STYLE (Run All) -->
+        <Style TargetType="Button" x:Key="HeroBtn" BasedOn="{StaticResource ModernBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="10" Background="#2563eb"> <!-- Blue -->
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#3b82f6"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                         <DropShadowEffect Color="#3b82f6" BlurRadius="15" Opacity="0.6" ShadowDepth="0"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1d4ed8"/>
+                            </Trigger>
+                             <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/> <!-- Cards Area -->
+            <ColumnDefinition Width="1*"/> <!-- Controls Area -->
+        </Grid.ColumnDefinitions>
+
+        <!-- LEFT: Status Dashboard -->
+        <StackPanel Grid.Column="0" Margin="0,0,20,0">
+            <TextBlock Text="System Diagnostics" FontSize="32" Margin="0,0,0,15" Foreground="White"/>
+            
+            <!-- Status Cards Grid (2x3) -->
+            <UniformGrid Columns="2">
+                <!-- Card 1 -->
+                <Border Style="{StaticResource GlassCard}">
+                    <StackPanel>
+                        <TextBlock Text="💾 Disk Check (D:)" FontSize="14" Foreground="#94a3b8"/>
+                        <TextBlock Name="Detail1" Text="Ready" FontSize="16" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                <!-- Card 2 -->
+                <Border Style="{StaticResource GlassCard}">
+                    <StackPanel>
+                        <TextBlock Text="🌐 Internet" FontSize="14" Foreground="#94a3b8"/>
+                        <TextBlock Name="Detail2" Text="Ready" FontSize="16" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                <!-- Card 3 -->
+                <Border Style="{StaticResource GlassCard}">
+                    <StackPanel>
+                        <TextBlock Text="🚀 Write Speed" FontSize="14" Foreground="#94a3b8"/>
+                        <TextBlock Name="Detail3" Text="Ready" FontSize="16" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                <!-- Card 4 -->
+                <Border Style="{StaticResource GlassCard}">
+                    <StackPanel>
+                        <TextBlock Text="📦 Node.js" FontSize="14" Foreground="#94a3b8"/>
+                        <TextBlock Name="Detail4" Text="Ready" FontSize="16" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                <!-- Card 5 -->
+                <Border Style="{StaticResource GlassCard}">
+                    <StackPanel>
+                        <TextBlock Text="☕ Java Environment" FontSize="14" Foreground="#94a3b8"/>
+                        <TextBlock Name="Detail5" Text="Ready" FontSize="16" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                <!-- Card 6 -->
+                <Border Style="{StaticResource GlassCard}">
+                    <StackPanel>
+                        <TextBlock Text="🔗 API Connectivity" FontSize="14" Foreground="#94a3b8"/>
+                        <TextBlock Name="Detail6" Text="Ready" FontSize="16" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- Console / Log Area -->
+            <Border Style="{StaticResource GlassCard}" Background="#0f172a" Margin="6,20,6,0" BorderBrush="#1e293b">
+                <StackPanel>
+                    <TextBlock Text="STATUS LOG" FontSize="12" Foreground="#64748b" FontWeight="Bold"/>
+                    <TextBlock Name="SummaryText" Text="Waiting for user input..." FontSize="14" Foreground="#94a3b8" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- RIGHT: Control Panel -->
+        <Border Grid.Column="1" CornerRadius="15" Background="#1e293b" Padding="20">
+            <Border.Effect>
+                 <DropShadowEffect Color="Black" BlurRadius="15" Opacity="0.2"/>
+            </Border.Effect>
+            
+            <StackPanel>
+                <TextBlock Text="Actions" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" HorizontalAlignment="Center"/>
+
+                <Button Name="BtnRunAll" Content="▶  RUN ALL TESTS" Style="{StaticResource HeroBtn}" Height="55" Margin="0,0,0,20" FontSize="16"/>
+
+                <TextBlock Text="Individual Tests" FontSize="12" Foreground="#64748b" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+
+                <Button Name="Btn1" Content="Test Disk" Style="{StaticResource ModernBtn}" Height="40" Margin="0,4"/>
+                <Button Name="Btn2" Content="Test Internet" Style="{StaticResource ModernBtn}" Height="40" Margin="0,4"/>
+                <Button Name="Btn3" Content="Test Speed" Style="{StaticResource ModernBtn}" Height="40" Margin="0,4"/>
+                <Button Name="Btn4" Content="Test Node.js" Style="{StaticResource ModernBtn}" Height="40" Margin="0,4"/>
+                <Button Name="Btn5" Content="Test Java" Style="{StaticResource ModernBtn}" Height="40" Margin="0,4"/>
+                <Button Name="Btn6" Content="Test API" Style="{StaticResource ModernBtn}" Height="40" Margin="0,4"/>
+
+                <Separator Margin="0,20" Background="#334155"/>
+
+                <Button Name="BtnReset" Content="⟳ Reset Status" Style="{StaticResource ModernBtn}" Height="40" Background="#334155"/>
+            </StackPanel>
+        </Border>
+
+    </Grid>
+</Window>
+"@
+
+# ---------------------------
+# Initialization & UI Logic
+# ---------------------------
+$reader = New-Object System.Xml.XmlNodeReader $xaml
+try {
+	$Window = [Windows.Markup.XamlReader]::Load($reader)
+} catch {
+	Write-Error "CRITICAL XAML LOAD FAILED: $($_.Exception.Message)"
+	throw
+}
+
+$Script:UI = $Window.Dispatcher
+
+function Get-ControlOrThrow($name) {
+	$c = $Window.FindName($name)
+	if ($null -eq $c) { throw "Missing control in XAML: $name" }
+	return $c
+}
+
+# Load Controls
+$Script:DetailControls = @(
+    (Get-ControlOrThrow "Detail1"), 
+    (Get-ControlOrThrow "Detail2"), 
+    (Get-ControlOrThrow "Detail3"), 
+    (Get-ControlOrThrow "Detail4"), 
+    (Get-ControlOrThrow "Detail5"), 
+    (Get-ControlOrThrow "Detail6")
+)
+
+$Script:SummaryText = Get-ControlOrThrow "SummaryText"
+$Script:Btn1 = Get-ControlOrThrow "Btn1"
+$Script:Btn2 = Get-ControlOrThrow "Btn2"
+$Script:Btn3 = Get-ControlOrThrow "Btn3"
+$Script:Btn4 = Get-ControlOrThrow "Btn4"
+$Script:Btn5 = Get-ControlOrThrow "Btn5"
+$Script:Btn6 = Get-ControlOrThrow "Btn6"
+$Script:BtnRunAll = Get-ControlOrThrow "BtnRunAll"
+$Script:BtnReset = Get-ControlOrThrow "BtnReset" 
+
+# Helper Functions
+function UiInvoke($scriptblock) {
+	if ($null -eq $Script:UI) { return }
+	$Script:UI.Invoke([action]$scriptblock)
+}
+
+function Refresh-UI {
+    [System.Windows.Forms.Application]::DoEvents()
+}
+
+function Set-Detail($index, [string]$text, [string]$color = "default") {
+	UiInvoke({
+        $lbl = $Script:DetailControls[$index]
+        if ($lbl) {
+		    $lbl.Text = $text
+		    switch ($color) {
+			    "green" { $lbl.Foreground = [System.Windows.Media.Brushes]::LightGreen }
+			    "red" { $lbl.Foreground = [System.Windows.Media.Brushes]::LightCoral }
+                "yellow" { $lbl.Foreground = [System.Windows.Media.Brushes]::Khaki }
+			    default { $lbl.Foreground = [System.Windows.Media.Brushes]::White }
+		    }
+        }
+	})
+}
+
+function Disable-Buttons($disable) {
+	UiInvoke({
+		$Script:Btn1.IsEnabled = -not $disable
+		$Script:Btn2.IsEnabled = -not $disable
+		$Script:Btn3.IsEnabled = -not $disable
+		$Script:Btn4.IsEnabled = -not $disable
+		$Script:Btn5.IsEnabled = -not $disable
+		$Script:Btn6.IsEnabled = -not $disable
+		$Script:BtnRunAll.IsEnabled = -not $disable
+		$Script:BtnReset.IsEnabled = -not $disable
+	})
+}
+
+function Update-Summary($text, $color="default") {
+	UiInvoke({
+        $lbl = $Script:SummaryText
+        if ($lbl) {
+		    $lbl.Text = $text
+		    switch ($color) {
+			    "green" { $lbl.Foreground = [System.Windows.Media.Brushes]::LightGreen }
+			    "pink" { $lbl.Foreground = [System.Windows.Media.Brushes]::LightCoral }
+			    default { $lbl.Foreground = [System.Windows.Media.Brushes]::LightSteelBlue }
+		    }
+        }
+	})
+}
+
+function Reset-All {
+    UiInvoke({
+        foreach ($c in $Script:DetailControls) { 
+            $c.Text = "Ready"
+            $c.Foreground = [System.Windows.Media.Brushes]::Gray
+        }
+        Update-Summary "Ready to run system diagnostics."
+    })
+}
+
+# ---------------------------
+# Test Logic Blocks (Improved Messages)
+# ---------------------------
+$Test1_Disk_Logic = {
+    param($Index)
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "⏳ Checking drive..."; Color = "yellow" }
+    Start-Sleep -Milliseconds 400
+    $drive = Get-PSDrive -Name D -ErrorAction SilentlyContinue
+    if ($drive) {
+        $freeGB = [math]::Round($drive.Free / 1GB, 2)
+        $detail = "$freeGB GB Free"
+        $pass = $true; $color = "green"
+    } else {
+        $detail = "Drive Not Found"
+        $pass = $false; $color = "red"
+    }
+    $icon = if($pass){"✔"}else{"✘"}
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "$icon $detail"; Color = $color }
+    return @{ TestName = "Disk"; Passed = $pass; Detail = $detail; Index = $Index }
+}
+
+$Test2_Internet_Logic = {
+    param($Index)
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "⏳ Pinging Google..."; Color = "yellow" }
+    Start-Sleep -Milliseconds 300
+    try {
+        $wc = New-Object System.Net.WebClient
+        $wc.DownloadString("http://www.google.com") | Out-Null
+        $detail = "Online"; $pass = $true; $color = "green"
+    } catch {
+        $detail = "Offline"; $pass = $false; $color = "red"
+    }
+    $icon = if($pass){"✔"}else{"✘"}
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "$icon $detail"; Color = $color }
+    return @{ TestName = "Internet"; Passed = $pass; Detail = $detail; Index = $Index }
+}
+
+$Test3_Speed_Logic = {
+    param($Index)
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "⏳ Writing 10MB..."; Color = "yellow" }
+    Start-Sleep -Milliseconds 200
+	$tmp = "$env:TEMP\speed_test.tmp"
+	try {
+        if (Test-Path $tmp) { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
+		$fs = [System.IO.File]::Open($tmp, 'Create'); $buffer = New-Object byte[](1MB); $written = 0; $SizeMB=10
+		$start = Get-Date
+		while ($written -lt ($SizeMB * 1MB)) { $fs.Write($buffer, 0, $buffer.Length); $written += $buffer.Length }
+		$fs.Close()
+		$elapsed = ((Get-Date) - $start).TotalSeconds
+        if ($elapsed -le 0) { $elapsed = 0.001 }
+		$speed = "{0:N0}" -f ($SizeMB / $elapsed)
+		Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+        $detail = "$speed MB/s"; $pass = $true; $color = "green"
+	} catch {
+		$detail = "Write Error"; $pass = $false; $color = "red"
+	}
+    $icon = if($pass){"✔"}else{"✘"}
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "$icon $detail"; Color = $color }
+    return @{ TestName = "Speed"; Passed = $pass; Detail = $detail; Index = $Index }
+}
+
+$Test4_Node_Logic = {
+    param($Index)
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "⏳ Verifying Node..."; Color = "yellow" }
+    Start-Sleep -Milliseconds 200
+	try {
+		$ver = node -v 2>$null
+		if ($ver) { $detail = "$($ver.Trim())"; $pass = $true; $color="green" } 
+        else { $detail = "Not Installed"; $pass = $false; $color="red" }
+	} catch { $detail = "Check Failed"; $pass = $false; $color="red" }
+    $icon = if($pass){"✔"}else{"✘"}
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "$icon $detail"; Color = $color }
+    return @{ TestName = "Node"; Passed = $pass; Detail = $detail; Index = $Index }
+}
+
+$Test5_Java_Logic = {
+    param($Index)
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "⏳ Verifying Java..."; Color = "yellow" }
+    Start-Sleep -Milliseconds 200
+	try {
+		$ver = (java -version 2>&1) -join " "
+		if ($ver -match "version") { $detail = "Java Detected"; $pass = $true; $color="green" }
+        else { $detail = "Not Found"; $pass = $false; $color="red" }
+	} catch { $detail = "Check Failed"; $pass = $false; $color="red" }
+    $icon = if($pass){"✔"}else{"✘"}
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "$icon $detail"; Color = $color }
+    return @{ TestName = "Java"; Passed = $pass; Detail = $detail; Index = $Index }
+}
+
+$Test6_API_Logic = {
+    param($Index)
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "⏳ Connecting..."; Color = "yellow" }
+    Start-Sleep -Milliseconds 200
+	try {
+		$resp = Invoke-WebRequest -Uri "https://www.youtube.com" -UseBasicParsing -TimeoutSec 4
+		if ($resp.StatusCode -eq 200) { $detail = "200 OK"; $pass = $true; $color="green" }
+        else { $detail = "Status $($resp.StatusCode)"; $pass = $false; $color="red" }
+	} catch { $detail = "Unreachable"; $pass = $false; $color="red" }
+    $icon = if($pass){"✔"}else{"✘"}
+    Write-Output @{ Action = 'Detail'; Index = $Index; Text = "$icon $detail"; Color = $color }
+    return @{ TestName = "API"; Passed = $pass; Detail = $detail; Index = $Index }
+}
+
+$AllTests = @(
+    @{ Name="Disk"; Logic=$Test1_Disk_Logic; Index=0 },
+    @{ Name="Internet"; Logic=$Test2_Internet_Logic; Index=1 },
+    @{ Name="Speed"; Logic=$Test3_Speed_Logic; Index=2 },
+    @{ Name="Node"; Logic=$Test4_Node_Logic; Index=3 },
+    @{ Name="Java"; Logic=$Test5_Java_Logic; Index=4 },
+    @{ Name="API"; Logic=$Test6_API_Logic; Index=5 }
+)
+
+# ---------------------------
+# Job Management (The Engine)
+# ---------------------------
+function Run-Test-Job($TestLogic, $Index) {
+    $job = Start-Job -ScriptBlock $TestLogic -ArgumentList $Index -Name "Test-Job-$Index"
+    $jobFinalResult = $null
+    
+    while ($job.State -eq 'Running') {
+        $updates = Receive-Job $job
+        if ($updates) {
+            foreach ($item in $updates) {
+                if ($item.Action -eq 'Detail') { Set-Detail $item.Index $item.Text $item.Color }
+                elseif ($item.TestName) { $jobFinalResult = $item }
+            }
+        }
+        Refresh-UI
+        Start-Sleep -Milliseconds 80
+    }
+    
+    # Catch leftovers
+    $remaining = Receive-Job $job
+    if ($remaining) {
+        foreach ($item in $remaining) {
+             if ($item.Action -eq 'Detail') { Set-Detail $item.Index $item.Text $item.Color }
+             elseif ($item.TestName) { $jobFinalResult = $item }
+        }
+    }
+    Remove-Job $job | Out-Null
+    return $jobFinalResult
+}
+
+function Run-Single-Test-Job([int]$Index) {
+    Disable-Buttons($true)
+    Update-Summary "Running single test: $($AllTests[$Index].Name)..." "default"
+    Run-Test-Job $AllTests[$Index].Logic $Index | Out-Null
+    Update-Summary "Test complete." "default"
+    Disable-Buttons($false)
+}
+
+# ---------------------------
+# Event Wiring
+# ---------------------------
+$Script:Btn1.Add_Click({ Run-Single-Test-Job 0 })
+$Script:Btn2.Add_Click({ Run-Single-Test-Job 1 })
+$Script:Btn3.Add_Click({ Run-Single-Test-Job 2 })
+$Script:Btn4.Add_Click({ Run-Single-Test-Job 3 })
+$Script:Btn5.Add_Click({ Run-Single-Test-Job 4 })
+$Script:Btn6.Add_Click({ Run-Single-Test-Job 5 })
+
+$Script:BtnRunAll.Add_Click({
+	Disable-Buttons($true)
+	Reset-All
+    Update-Summary "Starting full system diagnostic..." "default"
+    Refresh-UI
+
+    $FinalResults = @()
+    foreach ($test in $AllTests) {
+        # Highlight the card being tested
+        Set-Detail $test.Index "..." "yellow"
+        
+        $result = Run-Test-Job $test.Logic $test.Index
+        if ($result) { $FinalResults += $result }
+        
+        Start-Sleep -Milliseconds 150 
+    }
+
+    $passedCount = ($FinalResults | Where-Object { $_.Passed -eq $true } | Measure-Object).Count
+    $summaryText = "DIAGNOSTIC COMPLETE: $passedCount / $($AllTests.Count) Passed"
+    $summaryColor = if ($passedCount -eq $AllTests.Count) { "green" } else { "pink" }
+    Update-Summary $summaryText $summaryColor
+    
+    Disable-Buttons($false)
+})
+
+$Script:BtnReset.Add_Click({
+    Disable-Buttons($true)
+    Reset-All
+    Disable-Buttons($false)
+})
+
+# Launch
+Reset-All
+$Window.ShowDialog() | Out-Null
